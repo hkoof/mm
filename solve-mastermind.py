@@ -84,12 +84,13 @@ def main(gamefile):
         line = line.strip()
         if not line:
             continue
-        try:
-            code, hint = line.split()
-        except ValueError:
+        turn = line.split()
+        if len(turn) == 1:
+           turn.append("")
+        elif len(turn) > 2:
             raise RuntimeError("invalid line %d" % ln)
-        code = parseCode(code.strip(), ln)
-        hint = parseHint(hint.strip(), ln)
+        code = parseCode(turn[0].strip(), ln)
+        hint = parseHint(turn[1].strip(), ln)
         game.append((code, hint,))
 
     untried_codes = set(all_possible_codes())
