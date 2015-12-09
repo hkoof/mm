@@ -13,6 +13,15 @@ import itertools
 codelen = 5
 colors = frozenset(['w', 'z', 'b', 'r', 'y', 'g'])
 
+def all_possible_hints():
+    hints = list()
+    for white in range(codelen + 1):
+        for black in range(codelen - white + 1):
+            if white == 1 and black == (codelen - 1):
+                continue  # Exception: this hint cannot happen.
+            hints.append((white, black,))
+    return hints
+
 def all_possible_codes():
     return itertools.product(*[colors for dummy in range(codelen)])
 
@@ -85,6 +94,7 @@ def main(gamefile):
 
     untried_codes = set(all_possible_codes())
     remaining_codes = set(all_possible_codes())
+    number_of_possible_codes = len(untried_codes)
     i = 0
     for turn in game:
         i += 1
@@ -94,11 +104,49 @@ def main(gamefile):
         remaining_codes.discard(code)
         for d in get_non_matching_codes(remaining_codes, code, hint):
             remaining_codes.discard(d)
+
         print "TURN #%d:" % i, turn
         print "REMAINING:", len(remaining_codes)
         for c in remaining_codes:
             print c
         print
+
+    # Now find best  next move.
+    # This is most often a code from remaining_codes, but not always.
+    #
+    n = len(remaining_codes)
+    if n == 0:
+        raise RuntimeError("No possible code left. Wrong hint somewhere!")
+    if n == 1:
+        print remaining_codes
+        print "Done!"
+        sys.exit(0)
+
+    # For each code not played yet, calculate a score by trying how many
+    # codes would be dropped from remaining_codes for each possible hint.
+    # The codes that would drop the most for sure (at least, minimally)
+    # score higher. Of the highest scoring codes, it is best to pick one
+    # that is also in remaining_codes, because only then it could
+    # accidentally be The One Code we're looking for.
+    #
+    max_score = 0
+    best_codes = list()
+    hints = all_possible_hints()
+    for code in untried_codes:
+        min_dropped = number_of_possible_codes
+        for hint in hints:
+            n_dropped = len(get_non_matching_codes(remaining_codes, code, hint))
+            if n_dropped < min_dropped:
+                min_dropped = n_dropped
+        if min_dropped > max_score:
+            best_codes = list()
+        if min_dropped >= max_score:
+            best_codes.append((code, min_dropped))
+            max_score = min_dropped
+
+    print "BEST:"
+    for best in best_codes:
+        print best
 
 if __name__ == "__main__":
     print sys.argv
