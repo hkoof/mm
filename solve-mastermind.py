@@ -48,10 +48,12 @@ def calculate_hint(c, code):
         if c[i] == code[i]:
             correctPosition += 1
             positions.remove(i)
+    codecopy = list(code)
     for i in positions:
         for j in positions:
-            if c[i] == code[j]:
+            if c[i] == codecopy[j]:
                 correctColor += 1
+                codecopy[j] = None # prevent counting this one again
                 break
     return (correctColor, correctPosition,)
 
