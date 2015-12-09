@@ -6,8 +6,6 @@
 #
 # License: GPL
 # (c) Heiko Noordhof
-#
-# See
 
 import sys
 import itertools
@@ -15,7 +13,8 @@ import itertools
 codelen = 5
 colors = frozenset(['w', 'z', 'b', 'r', 'y', 'g'])
 
-possible_codes = list(itertools.product(*[colors for dummy in range(codelen)]))
+def all_possible_codes():
+    return itertools.product(*[colors for dummy in range(codelen)])
 
 def parseCode(string, lineNumber):
     if len(string) != codelen:
@@ -39,11 +38,36 @@ def parseHint(string, lineNumber):
             raise RuntimeError("invalid hint color '%s' in line %d" % (clr, lineNumber))
     if correctColor + correctPosition > codelen:
         raise RuntimeError("invalid hint length in line %d" % lineNumber)
-    return (correctColor, correctPosition)
+    return (correctColor, correctPosition,)
 
-def main():
+def calculate_hint(c, code):
+    correctColor = 0
+    correctPosition = 0
+    positions = range(codelen)
+    for i in range(codelen):
+        if c[i] == code[i]:
+            correctPosition += 1
+            positions.remove(i)
+    for i in positions:
+        for j in positions:
+            if c[i] == code[j]:
+                correctColor += 1
+                break
+    return (correctColor, correctPosition,)
+
+def remove_codes_with_non_matching_hints(codes, code, hint):
+    dellist = list()
+    for c in codes:
+        h = calculate_hint(c, code)
+        if h != hint:
+            dellist.append(c)
+    for d in dellist:
+        codes.discard(d)
+
+def main(gamefile):
     ln = 0
-    for line in sys.stdin:
+    game = list()
+    for line in gamefile:
         ln += 1
         line = line.strip()
         if not line:
@@ -54,8 +78,31 @@ def main():
             raise RuntimeError("invalid line %d" % ln)
         code = parseCode(code.strip(), ln)
         hint = parseHint(hint.strip(), ln)
-        print code, hint
+        game.append((code, hint,))
 
+    untried_codes = set(all_possible_codes())
+    remaining_codes = set(all_possible_codes())
+    i = 0
+    for turn in game:
+        i += 1
+        code = turn[0]
+        hint = turn[1]
+        untried_codes.discard(code)
+        remove_codes_with_non_matching_hints(remaining_codes, code, hint)
+        print "TURN #%d:" % i, turn
+        print "REMAINING:", len(remaining_codes)
+        for c in remaining_codes:
+            print c
+        print
 
 if __name__ == "__main__":
-    main()
+    print sys.argv
+    print len(sys.argv)
+    if len(sys.argv) > 2:
+        raise RuntimeError("max 1 argument accepted (for game file)")
+    elif len(sys.argv) == 2:
+        gamefile = open(sys.argv[1])
+    else:
+        gamefile = sys.stdin
+    main(gamefile)
+
