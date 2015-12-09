@@ -132,7 +132,7 @@ def main(gamefile):
     max_score = 0
     best_codes = list()
     hints = all_possible_hints()
-    for code in untried_codes:
+    for code in remaining_codes:
         min_dropped = number_of_possible_codes
         for hint in hints:
             n_dropped = len(get_non_matching_codes(remaining_codes, code, hint))
