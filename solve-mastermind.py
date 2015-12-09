@@ -90,6 +90,7 @@ def main(gamefile):
         code = turn[0]
         hint = turn[1]
         untried_codes.discard(code)
+        remaining_codes.discard(code)
         remove_codes_with_non_matching_hints(remaining_codes, code, hint)
         print "TURN #%d:" % i, turn
         print "REMAINING:", len(remaining_codes)
