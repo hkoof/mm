@@ -57,14 +57,15 @@ def calculate_hint(c, code):
                 break
     return (correctColor, correctPosition,)
 
-def remove_codes_with_non_matching_hints(codes, code, hint):
-    dellist = list()
+def get_non_matching_codes(codes, code, hint):
+    # Return a list of codes that do not result in <hint> when
+    # checked against <code>.
+    dontmatch = list()
     for c in codes:
         h = calculate_hint(c, code)
         if h != hint:
-            dellist.append(c)
-    for d in dellist:
-        codes.discard(d)
+            dontmatch.append(c)
+    return dontmatch
 
 def main(gamefile):
     ln = 0
@@ -91,7 +92,8 @@ def main(gamefile):
         hint = turn[1]
         untried_codes.discard(code)
         remaining_codes.discard(code)
-        remove_codes_with_non_matching_hints(remaining_codes, code, hint)
+        for d in get_non_matching_codes(remaining_codes, code, hint):
+            remaining_codes.discard(d)
         print "TURN #%d:" % i, turn
         print "REMAINING:", len(remaining_codes)
         for c in remaining_codes:
