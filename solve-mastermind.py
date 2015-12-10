@@ -47,7 +47,7 @@ def parseHint(string, lineNumber):
     for clr in string:
         if clr == 'w':
             correctColor += 1
-        elif clr == 'b':
+        elif clr == 'r':
             correctPosition += 1
         else:
             raise RuntimeError("invalid hint color '%s' in line %d" % (clr, lineNumber))
@@ -82,7 +82,7 @@ def get_non_matching_codes(codes, code, hint):
             dontmatch.append(c)
     return dontmatch
 
-def main(gamefile):
+def load_game(gamefile):
     ln = 0
     game = list()
     for line in gamefile:
@@ -98,22 +98,26 @@ def main(gamefile):
         code = parseCode(turn[0].strip(), ln)
         hint = parseHint(turn[1].strip(), ln)
         game.append((code, hint,))
+    return game
 
+def main(gamefile):
+    i = 0
     untried_codes = set(all_possible_codes())
     remaining_codes = set(all_possible_codes())
     number_of_possible_codes = len(untried_codes)
-    i = 0
-    for turn in game:
-        i += 1
-        code = turn[0]
-        hint = turn[1]
-        untried_codes.discard(code)
-        remaining_codes.discard(code)
-        for d in get_non_matching_codes(remaining_codes, code, hint):
-            remaining_codes.discard(d)
-        print "Turn #%d:" % i, turn
-        print "Remaining matching codes:", len(remaining_codes)
-        print
+    if gamefile is not None:
+        game = load_game(gamefile)
+        for turn in game:
+            i += 1
+            code = turn[0]
+            hint = turn[1]
+            untried_codes.discard(code)
+            remaining_codes.discard(code)
+            for d in get_non_matching_codes(remaining_codes, code, hint):
+                remaining_codes.discard(d)
+            print "Turn #%d:" % i, turn
+            print "Remaining matching codes:", len(remaining_codes)
+            print
 
     # Now find best  next move.
     # This is most often a code from remaining_codes, but not always.
@@ -144,7 +148,7 @@ def main(gamefile):
         loop_iterator = remaining_codes
     for code in loop_iterator:
         total_dropped = 0
-        min_dropped = number_of_remaining_codes
+        min_dropped = number_of_possible_codes
         for hint in hints:
             n_dropped = len(get_non_matching_codes(remaining_codes, code, hint))
             total_dropped += n_dropped
