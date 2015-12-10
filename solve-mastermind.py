@@ -8,6 +8,7 @@
 # (c) Heiko Noordhof
 
 import sys
+import random
 import itertools
 
 progress_bar = True
@@ -16,8 +17,15 @@ try:
 except ImportError:
     progress_bar = False
 
+# Limit on set of codes to consifer for a move.
+# Prevents unneeded thinking times for early moves.
+#
+max_code_set = 300
+
 codelen = 5
 colors = frozenset(['w', 'k', 'b', 'r', 'y', 'g'])
+
+number_of_possible_codes = None
 
 def all_possible_hints():
     hints = list()
@@ -100,57 +108,51 @@ def load_game(gamefile):
         game.append((code, hint,))
     return game
 
-def main(gamefile):
+def run_game(game, untried_codes, remaining_codes):
     i = 0
-    untried_codes = set(all_possible_codes())
-    remaining_codes = set(all_possible_codes())
-    number_of_possible_codes = len(untried_codes)
-    if gamefile is not None:
-        game = load_game(gamefile)
-        for turn in game:
-            i += 1
-            code = turn[0]
-            hint = turn[1]
-            untried_codes.discard(code)
-            remaining_codes.discard(code)
-            for d in get_non_matching_codes(remaining_codes, code, hint):
-                remaining_codes.discard(d)
-            print "Turn #%d:" % i, turn
-            print "Remaining matching codes:", len(remaining_codes)
-            print
+    for turn in game:
+        i += 1
+        code = turn[0]
+        hint = turn[1]
+        untried_codes.discard(code)
+        remaining_codes.discard(code)
+        for d in get_non_matching_codes(remaining_codes, code, hint):
+            remaining_codes.discard(d)
+        print "Turn #%d:" % i, turn
+        print "Remaining matching codes:", len(remaining_codes)
+        print
 
-    # Now find best  next move.
-    # This is most often a code from remaining_codes, but not always.
-    #
+def calculate_best_move(remaining_codes):
     n = len(remaining_codes)
+    if n > max_code_set:
+        n = max_code_set
+        code_set = random.sample(remaining_codes, max_code_set)
+        print "CLIPPED"
+    else:
+        code_set = remaining_codes
+        
     if n == 0:
         raise RuntimeError("No possible code left. Wrong hint somewhere!")
     if n == 1:
-        print remaining_codes
-        print "Done!"
-        sys.exit(0)
-
-    # For each code not played yet, calculate a score by trying how many
-    # codes would be dropped from remaining_codes for each possible hint.
-    # The codes that would drop the most for sure (at least, minimally)
-    # score higher. Of the highest scoring codes, it is best to pick one
-    # that is also in remaining_codes, because only then it could
-    # accidentally be The One Code we're looking for.
+        return list(code_set)
     #
-    n = len(remaining_codes)
+    # For each code not played yet, calculate a score by trying how many
+    # codes would be dropped from the code_set for each possible hint.
+    #
     max_score = 0
     max_total_dropped = 0
     best_codes = list()
     hints = all_possible_hints()
     if progress_bar and n >= 60:
-        loop_iterator = tqdm(remaining_codes, "thinking...", n)
+        loop_iterator = tqdm(code_set, "thinking...", n)
     else:
-        loop_iterator = remaining_codes
+        loop_iterator = code_set
+
     for code in loop_iterator:
         total_dropped = 0
         min_dropped = number_of_possible_codes
         for hint in hints:
-            n_dropped = len(get_non_matching_codes(remaining_codes, code, hint))
+            n_dropped = len(get_non_matching_codes(code_set, code, hint))
             total_dropped += n_dropped
             if n_dropped < min_dropped:
                 min_dropped = n_dropped
@@ -164,10 +166,26 @@ def main(gamefile):
         if min_dropped >= max_score:
             best_codes.append((code, min_dropped, total_dropped))
 
-    print "Best next moves: (%d)" % len(best_codes)
-    print "---------------------------------------------------"
-    for best in best_codes:
-        print best
+    return (random.choice(best_codes)[0], len(best_codes),)
+
+def main(gamefile):
+    global number_of_possible_codes
+
+    untried_codes = set(all_possible_codes())
+    remaining_codes = set(all_possible_codes())
+    number_of_possible_codes = len(untried_codes)
+    if gamefile is not None:
+        game = load_game(gamefile)
+        run_game(game, untried_codes, remaining_codes)
+    else:
+        game = list()
+
+    move, number_of_best_moves = calculate_best_move(remaining_codes)
+    if number_of_best_moves == 1:
+        print move
+        print "*\o/*  ", move, "  *\o/*"
+        sys.exit(0)
+    print "Move:", move
 
 if __name__ == "__main__":
     if len(sys.argv) > 2:
