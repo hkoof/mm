@@ -24,7 +24,7 @@ except ImportError:
 # Limit on set of codes to consifer for a move.
 # Prevents unneeded thinking times for early moves.
 #
-max_code_set = 200
+max_code_set = 150
 
 codelen = 5
 colors = frozenset(['w', 'k', 'b', 'r', 'y', 'g'])
@@ -38,6 +38,18 @@ def format_turn(turn):
     code = turn[0]
     hint = turn[1]
     return "%s %s%s" % (format_code(code), "w" * hint[0], "r" * hint[1])
+
+def read_hint_input():
+    hint = None
+    while hint is None:
+        string = raw_input("Hint please: ")
+        try:
+            hint = parseHint(string, 0)
+        except RuntimeError, message:
+            print message
+            hint = None  
+        print
+    return hint
 
 def all_possible_hints():
     hints = list()
@@ -122,6 +134,10 @@ def load_game(gamefile):
 
 def process_move(code, hint, untried_codes, remaining_codes):
     untried_codes.discard(code)
+    if hint == (0, 5,):   # Found the code!   *\o/*
+        remaining_codes.clear()
+        remaining_codes.add(code)
+        return
     remaining_codes.discard(code)
     for d in get_non_matching_codes(remaining_codes, code, hint):
         remaining_codes.discard(d)
@@ -206,26 +222,14 @@ def main(gamefile):
     i = 0
     game = list()
     while True:
-        move = calculate_best_move(remaining_codes)
         i += 1
-        if len(remaining_codes) == 0:
-            print "Code found in %d moves:" % (i,), format_code(move)
-            sys.exit(0)
+        move = calculate_best_move(remaining_codes)
         print "Move:", format_code(move)
         hint = read_hint_input()
         process_move(move, hint, untried_codes, remaining_codes)
-
-def read_hint_input():
-    hint = None
-    while hint is None:
-        string = raw_input("Hint please: ")
-        try:
-            hint = parseHint(string, 0)
-        except RuntimeError, message:
-            print message
-            hint = None  
-        print
-    return hint
+        if len(remaining_codes) == 1:
+            print "Code found in %d move%s" % (i, 's' if i>1 else '')
+            sys.exit(0)
 
 if __name__ == "__main__":
     if len(sys.argv) > 2:
