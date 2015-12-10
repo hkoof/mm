@@ -42,7 +42,7 @@ def format_turn(turn):
 def read_hint_input():
     hint = None
     while hint is None:
-        string = raw_input("Hint please: ")
+        string = raw_input("Hint: ")
         try:
             hint = parseHint(string, 0)
         except RuntimeError, message:
@@ -148,6 +148,7 @@ def run_game(game, untried_codes, remaining_codes):
         i += 1
         code = turn[0]
         hint = turn[1]
+        print "Possible codes left: %d" % len(remaining_codes)
         process_move(code, hint, untried_codes, remaining_codes)
         print "Turn #%d:" % i
         print format_turn(turn)
@@ -214,6 +215,7 @@ def main(gamefile):
         if len(remaining_codes) == 0:
             print "Code found:", format_code(move)
         else:
+            print "Possible codes left: %d" % len(remaining_codes)
             print "Best move:", format_code(move)
         sys.exit()
 
@@ -223,11 +225,11 @@ def main(gamefile):
     game = list()
     while True:
         i += 1
+        print "Possible codes left: %d" % len(remaining_codes)
         move = calculate_best_move(remaining_codes)
         print "Move:", format_code(move)
         hint = read_hint_input()
         process_move(move, hint, untried_codes, remaining_codes)
-        print "Possible codes left: %d" % len(remaining_codes)
         if len(remaining_codes) == 1:
             print "Code found in %d move%s" % (i, 's' if i>1 else '')
             sys.exit(0)
