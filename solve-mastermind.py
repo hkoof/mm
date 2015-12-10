@@ -111,11 +111,8 @@ def main(gamefile):
         remaining_codes.discard(code)
         for d in get_non_matching_codes(remaining_codes, code, hint):
             remaining_codes.discard(d)
-
-        print "TURN #%d:" % i, turn
-        print "REMAINING:", len(remaining_codes)
-        #for c in remaining_codes:
-        #    print c
+        print "Turn #%d:" % i, turn
+        print "Remaining matching codes:", len(remaining_codes)
         print
 
     # Now find best  next move.
@@ -147,7 +144,7 @@ def main(gamefile):
         loop_iterator = remaining_codes
     for code in loop_iterator:
         total_dropped = 0
-        min_dropped = number_of_possible_codes
+        min_dropped = number_of_remaining_codes
         for hint in hints:
             n_dropped = len(get_non_matching_codes(remaining_codes, code, hint))
             total_dropped += n_dropped
@@ -169,8 +166,6 @@ def main(gamefile):
         print best
 
 if __name__ == "__main__":
-    print sys.argv
-    print len(sys.argv)
     if len(sys.argv) > 2:
         raise RuntimeError("max 1 argument accepted (for game file)")
     elif len(sys.argv) == 2:
