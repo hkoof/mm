@@ -208,7 +208,7 @@ def main(gamefile):
     while True:
         move = calculate_best_move(remaining_codes)
         i += 1
-        if len(remaining_codes) == 1:
+        if len(remaining_codes) == 0:
             print "Code found in %d moves:" % (i,), format_code(move)
             sys.exit(0)
         print "Move:", format_code(move)
