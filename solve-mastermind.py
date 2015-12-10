@@ -32,12 +32,12 @@ colors = frozenset(['w', 'k', 'b', 'r', 'y', 'g'])
 number_of_possible_codes = None
 
 def format_code(move):
-    return " ".join(move)
+    return "".join(move)
 
 def format_turn(turn):
     code = turn[0]
     hint = turn[1]
-    return "%s | %s%s" % (format_code(code), "w" * hint[0], "r" * hint[1])
+    return "%s %s%s" % (format_code(code), "w" * hint[0], "r" * hint[1])
 
 def all_possible_hints():
     hints = list()
