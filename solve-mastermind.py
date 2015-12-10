@@ -227,6 +227,7 @@ def main(gamefile):
         print "Move:", format_code(move)
         hint = read_hint_input()
         process_move(move, hint, untried_codes, remaining_codes)
+        print "Possible codes left: %d" % len(remaining_codes)
         if len(remaining_codes) == 1:
             print "Code found in %d move%s" % (i, 's' if i>1 else '')
             sys.exit(0)
