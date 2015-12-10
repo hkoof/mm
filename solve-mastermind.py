@@ -10,8 +10,14 @@
 import sys
 import itertools
 
+progress_bar = True
+try:
+    from tqdm import tqdm
+except ImportError:
+    progress_bar = False
+
 codelen = 5
-colors = frozenset(['w', 'z', 'b', 'r', 'y', 'g'])
+colors = frozenset(['w', 'k', 'b', 'r', 'y', 'g'])
 
 def all_possible_hints():
     hints = list()
@@ -41,7 +47,7 @@ def parseHint(string, lineNumber):
     for clr in string:
         if clr == 'w':
             correctColor += 1
-        elif clr == 'z':
+        elif clr == 'b':
             correctPosition += 1
         else:
             raise RuntimeError("invalid hint color '%s' in line %d" % (clr, lineNumber))
@@ -108,8 +114,8 @@ def main(gamefile):
 
         print "TURN #%d:" % i, turn
         print "REMAINING:", len(remaining_codes)
-        for c in remaining_codes:
-            print c
+        #for c in remaining_codes:
+        #    print c
         print
 
     # Now find best  next move.
@@ -130,22 +136,35 @@ def main(gamefile):
     # that is also in remaining_codes, because only then it could
     # accidentally be The One Code we're looking for.
     #
+    n = len(remaining_codes)
     max_score = 0
+    max_total_dropped = 0
     best_codes = list()
     hints = all_possible_hints()
-    for code in remaining_codes:
+    if progress_bar and n >= 60:
+        loop_iterator = tqdm(remaining_codes, "thinking...", n)
+    else:
+        loop_iterator = remaining_codes
+    for code in loop_iterator:
+        total_dropped = 0
         min_dropped = number_of_possible_codes
         for hint in hints:
             n_dropped = len(get_non_matching_codes(remaining_codes, code, hint))
+            total_dropped += n_dropped
             if n_dropped < min_dropped:
                 min_dropped = n_dropped
+        if total_dropped > max_total_dropped:
+            max_total_dropped = total_dropped
         if min_dropped > max_score:
             best_codes = list()
-        if min_dropped >= max_score:
-            best_codes.append((code, min_dropped))
             max_score = min_dropped
+        if min_dropped == max_score and total_dropped > max_total_dropped:
+            best_codes = list()
+        if min_dropped >= max_score:
+            best_codes.append((code, min_dropped, total_dropped))
 
-    print "BEST:"
+    print "Best next moves: (%d)" % len(best_codes)
+    print "---------------------------------------------------"
     for best in best_codes:
         print best
 
