@@ -47,7 +47,7 @@ def read_hint_input():
             hint = parseHint(string, 0)
         except RuntimeError, message:
             print message
-            hint = None  
+            hint = None
         print
     return hint
 
