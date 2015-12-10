@@ -24,7 +24,7 @@ except ImportError:
 # Limit on set of codes to consifer for a move.
 # Prevents unneeded thinking times for early moves.
 #
-max_code_set = 150
+max_code_set = 300
 
 codelen = 5
 colors = frozenset(['w', 'k', 'b', 'r', 'y', 'g'])
@@ -149,17 +149,17 @@ def run_game(game, untried_codes, remaining_codes):
         code = turn[0]
         hint = turn[1]
         print "Possible codes left: %d" % len(remaining_codes)
-        process_move(code, hint, untried_codes, remaining_codes)
         print "Turn #%d:" % i
         print format_turn(turn)
         print
+        process_move(code, hint, untried_codes, remaining_codes)
 
 def calculate_best_move(remaining_codes):
     n = len(remaining_codes)
     if n == number_of_possible_codes:
         # First move, don't care too much. Not just any code tho,
         # so do calculate, but from a random sample of all possible codes.
-        n = 50
+        n = 100
         code_set = random.sample(remaining_codes, n)
     elif n > max_code_set:
         n = max_code_set
@@ -179,7 +179,7 @@ def calculate_best_move(remaining_codes):
     best_codes = list()
     hints = all_possible_hints()
     if progress_bar and n >= 60:
-        loop_iterator = tqdm(code_set, "thinking...", n)
+        loop_iterator = tqdm(code_set, total=n, ncols=70)
     else:
         loop_iterator = code_set
     for code in loop_iterator:
@@ -221,17 +221,15 @@ def main(gamefile):
 
     # Interactive game
     #
-    i = 0
     game = list()
     while True:
-        i += 1
         print "Possible codes left: %d" % len(remaining_codes)
         move = calculate_best_move(remaining_codes)
         print "Move:", format_code(move)
         hint = read_hint_input()
         process_move(move, hint, untried_codes, remaining_codes)
         if len(remaining_codes) == 1:
-            print "Code found in %d move%s" % (i, 's' if i>1 else '')
+            print "Code found:", format_code(remaining_codes.pop())
             sys.exit(0)
 
 if __name__ == "__main__":
