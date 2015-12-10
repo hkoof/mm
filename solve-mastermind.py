@@ -11,6 +11,10 @@ import sys
 import random
 import itertools
 
+# just importing "readline" makes input() and raw_input()
+# behave more user friendly.
+import readline
+
 progress_bar = True
 try:
     from tqdm import tqdm
@@ -20,12 +24,20 @@ except ImportError:
 # Limit on set of codes to consifer for a move.
 # Prevents unneeded thinking times for early moves.
 #
-max_code_set = 300
+max_code_set = 200
 
 codelen = 5
 colors = frozenset(['w', 'k', 'b', 'r', 'y', 'g'])
 
 number_of_possible_codes = None
+
+def format_code(move):
+    return " ".join(move)
+
+def format_turn(turn):
+    code = turn[0]
+    hint = turn[1]
+    return "%s | %s%s" % (format_code(code), "w" * hint[0], "r" * hint[1])
 
 def all_possible_hints():
     hints = list()
@@ -108,33 +120,39 @@ def load_game(gamefile):
         game.append((code, hint,))
     return game
 
+def process_move(code, hint, untried_codes, remaining_codes):
+    untried_codes.discard(code)
+    remaining_codes.discard(code)
+    for d in get_non_matching_codes(remaining_codes, code, hint):
+        remaining_codes.discard(d)
+
 def run_game(game, untried_codes, remaining_codes):
     i = 0
     for turn in game:
         i += 1
         code = turn[0]
         hint = turn[1]
-        untried_codes.discard(code)
-        remaining_codes.discard(code)
-        for d in get_non_matching_codes(remaining_codes, code, hint):
-            remaining_codes.discard(d)
-        print "Turn #%d:" % i, turn
-        print "Remaining matching codes:", len(remaining_codes)
+        process_move(code, hint, untried_codes, remaining_codes)
+        print "Turn #%d:" % i
+        print format_turn(turn)
         print
 
 def calculate_best_move(remaining_codes):
     n = len(remaining_codes)
-    if n > max_code_set:
+    if n == number_of_possible_codes:
+        # First move, don't care too much. Not just any code tho,
+        # so do calculate, but from a random sample of all possible codes.
+        n = 50
+        code_set = random.sample(remaining_codes, n)
+    elif n > max_code_set:
         n = max_code_set
         code_set = random.sample(remaining_codes, max_code_set)
-        print "CLIPPED"
     else:
         code_set = remaining_codes
-        
     if n == 0:
         raise RuntimeError("No possible code left. Wrong hint somewhere!")
     if n == 1:
-        return list(code_set)
+        return remaining_codes.pop()
     #
     # For each code not played yet, calculate a score by trying how many
     # codes would be dropped from the code_set for each possible hint.
@@ -147,7 +165,6 @@ def calculate_best_move(remaining_codes):
         loop_iterator = tqdm(code_set, "thinking...", n)
     else:
         loop_iterator = code_set
-
     for code in loop_iterator:
         total_dropped = 0
         min_dropped = number_of_possible_codes
@@ -165,8 +182,7 @@ def calculate_best_move(remaining_codes):
             best_codes = list()
         if min_dropped >= max_score:
             best_codes.append((code, min_dropped, total_dropped))
-
-    return (random.choice(best_codes)[0], len(best_codes),)
+    return random.choice(best_codes)[0]
 
 def main(gamefile):
     global number_of_possible_codes
@@ -174,18 +190,42 @@ def main(gamefile):
     untried_codes = set(all_possible_codes())
     remaining_codes = set(all_possible_codes())
     number_of_possible_codes = len(untried_codes)
+
     if gamefile is not None:
         game = load_game(gamefile)
         run_game(game, untried_codes, remaining_codes)
-    else:
-        game = list()
+        move = calculate_best_move(remaining_codes)
+        if len(remaining_codes) == 0:
+            print "Code found:", format_code(move)
+        else:
+            print "Best move:", format_code(move)
+        sys.exit()
 
-    move, number_of_best_moves = calculate_best_move(remaining_codes)
-    if number_of_best_moves == 1:
-        print move
-        print "*\o/*  ", move, "  *\o/*"
-        sys.exit(0)
-    print "Move:", move
+    # Interactive game
+    #
+    i = 0
+    game = list()
+    while True:
+        move = calculate_best_move(remaining_codes)
+        i += 1
+        if len(remaining_codes) == 1:
+            print "Code found in %d moves:" % (i,), format_code(move)
+            sys.exit(0)
+        print "Move:", format_code(move)
+        hint = read_hint_input()
+        process_move(move, hint, untried_codes, remaining_codes)
+
+def read_hint_input():
+    hint = None
+    while hint is None:
+        string = raw_input("Hint please: ")
+        try:
+            hint = parseHint(string, 0)
+        except RuntimeError, message:
+            print message
+            hint = None  
+        print
+    return hint
 
 if __name__ == "__main__":
     if len(sys.argv) > 2:
@@ -193,6 +233,6 @@ if __name__ == "__main__":
     elif len(sys.argv) == 2:
         gamefile = open(sys.argv[1])
     else:
-        gamefile = sys.stdin
+        gamefile = None
     main(gamefile)
 
