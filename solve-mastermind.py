@@ -199,6 +199,7 @@ def calculate_best_move(remaining_codes):
             best_codes = list()
         if min_dropped >= max_score:
             best_codes.append((code, min_dropped, total_dropped))
+    print "Best codes to choose from:", len(best_codes)
     return random.choice(best_codes)[0]
 
 def main(gamefile):
