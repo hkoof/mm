@@ -193,12 +193,18 @@ def calculate_best_move(remaining_codes):
         if total_dropped > max_total_dropped:
             max_total_dropped = total_dropped
         if min_dropped > max_score:
-            best_codes = list()
+            #best_codes = list()
             max_score = min_dropped
         if min_dropped == max_score and total_dropped > max_total_dropped:
-            best_codes = list()
+            #best_codes = list()
+            pass
         if min_dropped >= max_score:
             best_codes.append((code, min_dropped, total_dropped))
+    print "-----------------------------------------"
+    best_codes.sort(key=lambda t: t[1:])
+    for c in best_codes:
+        print c
+    print "-----------------------------------------"
     print "Best codes to choose from:", len(best_codes)
     return random.choice(best_codes)[0]
 
