@@ -200,6 +200,9 @@ def calculate_best_move(remaining_codes):
             pass
         if min_dropped >= max_score:
             best_codes.append((code, min_dropped, total_dropped))
+    print "------------ All possible codes ---------"
+    for c in remaining_codes:
+        print c
     print "-----------------------------------------"
     best_codes.sort(key=lambda t: t[1:])
     for c in best_codes:
